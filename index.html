@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="th">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ระบบจองห้องอบรมคอมพิวเตอร์ - Midnight Premium</title>
+
+    <!-- Fonts -->
+    <link
+        href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;700&family=Inter:wght@400;600;800&display=swap"
+        rel="stylesheet">
+
+    <!-- External CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <button id="mobile-menu-btn" class="mobile-toggle">☰</button>
+    <div id="sidebar-overlay" class="sidebar-overlay"></div>
+
+    <div class="app-container">
+        <aside class="sidebar">
+            <div class="logo">
+                <img src="1.png" alt="Royal Logo">
+                <h1>ระบบจองห้องอบรม<span>กรมเทคโนโลยีสารสนเทศและอวกาศกลาโหม</span></h1>
+            </div>
+
+            <nav class="sidebar-nav">
+                <div class="nav-section">
+                    <h3>สถานะปัจจุบัน</h3>
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <span class="stat-label">จองทั้งหมด</span>
+                            <span class="stat-value" id="total-bookings">0</span>
+                        </div>
+                        <div class="stat-card">
+                            <span class="stat-label">เดือนนี้</span>
+                            <span class="stat-value" id="month-bookings">0</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="nav-section">
+                    <h3>ทรัพยากรห้อง</h3>
+                    <ul class="room-list">
+                        <li class="room-item active" data-room="comp-room">
+                            <span class="room-color" style="background: var(--accent);"></span>
+                            ห้องอบรม กรมเทคโนโลยีสารสนเทศและอวกาศกลาโหม
+                            <span class="room-count" id="count-comp-room">0</span>
+                        </li>
+                    </ul>
+                </div>
+
+                <div class="nav-section">
+                    <h3>ห้องอบรม กรมเทคโนโลยีสารสนเทศและอวกาศกลาโหม</h3>
+                    <div id="recent-bookings" class="recent-list">
+                        <!-- Dynamic Content -->
+                    </div>
+                </div>
+            </nav>
+
+            <div class="sidebar-footer" style="margin-top: auto; padding-top: 2rem;">
+                <button id="export-pdf-btn" class="secondary-btn" style="width: 100%;">🖨️ พิมพ์รายงาน PDF</button>
+            </div>
+        </aside>
+
+        <main class="main-content">
+            <header class="top-header">
+                <div class="header-info">
+                    <h2>ปฏิทินการจองห้องอบรม</h2>
+                    <p>เลือกวันที่บนปฏิทินเพื่อบันทึกการใช้ห้องอบรม</p>
+                </div>
+                <div class="header-actions">
+                    <button id="add-booking-btn" class="primary-btn">+ เพิ่มการจองใหม่</button>
+                </div>
+            </header>
+
+            <div class="calendar-wrapper">
+                <div id="calendar"></div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/dexie@3.2.4/dist/dexie.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script src="script.js"></script>
+</body>
+
+</html>
