@@ -35,19 +35,23 @@ document.addEventListener('DOMContentLoaded', async function () {
         });
     }
 
-    // Storage Sync
-    window.addEventListener('storage', async (e) => {
-        if (e.key === 'db_sync_trigger') {
-            await loadBookings();
-            calendar.refetchEvents();
-            updateStats();
-            renderRecentList();
-        }
-    });
-    function triggerSync() { localStorage.setItem('db_sync_trigger', Date.now()); }
+    let calendar;
+
+    async function refreshFromDb() {
+        await loadBookings();
+        calendar.refetchEvents();
+        updateStats();
+        renderRecentList();
+    }
+
+    BookingSync.onSync(refreshFromDb);
+
+    function triggerSync() {
+        BookingSync.trigger();
+    }
 
     // Calendar
-    const calendar = new FullCalendar.Calendar(calendarEl, {
+    calendar = new FullCalendar.Calendar(calendarEl, {
         initialView: 'dayGridMonth',
         headerToolbar: {
             left: 'prev,next today',
@@ -80,6 +84,13 @@ document.addEventListener('DOMContentLoaded', async function () {
     calendar.render();
     updateStats();
     renderRecentList();
+
+    await BookingSync.pullRemote(db);
+    await refreshFromDb();
+
+    setInterval(async () => {
+        if (await BookingSync.pullRemote(db)) await refreshFromDb();
+    }, BookingSync.pollIntervalMs);
 
     // Modals
     function openBookingModal(start, end) {

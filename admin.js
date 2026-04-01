@@ -1,27 +1,65 @@
-document.addEventListener('DOMContentLoaded', function () {
+document.addEventListener('DOMContentLoaded', async function () {
     const calendarEl = document.getElementById('calendar');
     const tableBody = document.getElementById('admin-table-body');
     const searchInput = document.getElementById('table-search');
 
-    let bookings = JSON.parse(localStorage.getItem('room_bookings')) || [];
+    const db = new Dexie('TrainingRoomDB');
+    db.version(1).stores({
+        bookings: 'id, title, start, end, agency, user, room'
+    });
+
+    let bookings = [];
     let currentUser = JSON.parse(localStorage.getItem('current_user')) || null;
 
-    // Charts instances
     let monthlyChart, agencyChart, timeSlotChart;
+    let calendar;
 
-    // --- SECURITY CHECK ---
     if (!currentUser || currentUser.role !== 'admin') {
         window.location.href = 'index.html';
         return;
     }
 
-    // Room colors and names
     const rooms = {
         'comp-room': { name: 'ห้องอบรมคอมพิวเตอร์ กทส.กห.', color: '#6366f1' }
     };
 
-    // --- CALENDAR INIT ---
-    const calendar = new FullCalendar.Calendar(calendarEl, {
+    async function migrateLegacyLocalStorage() {
+        const raw = localStorage.getItem('room_bookings');
+        if (!raw) return;
+        try {
+            const arr = JSON.parse(raw);
+            if (!Array.isArray(arr)) return;
+            await db.transaction('rw', db.bookings, async () => {
+                for (const b of arr) {
+                    if (b && b.id != null) await db.bookings.put(b);
+                }
+            });
+            localStorage.removeItem('room_bookings');
+            BookingSync.trigger();
+        } catch (e) {
+            console.warn('Legacy migration skipped:', e);
+        }
+    }
+
+    async function loadBookings() {
+        bookings = await db.bookings.toArray();
+    }
+
+    await migrateLegacyLocalStorage();
+    await loadBookings();
+
+    async function refreshAll() {
+        await loadBookings();
+        calendar.removeAllEvents();
+        calendar.addEventSource(bookings);
+        renderAdminTable(searchInput.value);
+        updateStats();
+        updateCharts();
+    }
+
+    BookingSync.onSync(refreshAll);
+
+    calendar = new FullCalendar.Calendar(calendarEl, {
         initialView: 'dayGridMonth',
         headerToolbar: {
             left: 'prev,next today',
@@ -46,20 +84,23 @@ document.addEventListener('DOMContentLoaded', function () {
     updateStats();
     renderAdminTable();
 
-    // --- VIEW SWITCHING ---
+    await BookingSync.pullRemote(db);
+    await refreshAll();
+
+    setInterval(async () => {
+        if (await BookingSync.pullRemote(db)) await refreshAll();
+    }, BookingSync.pollIntervalMs);
+
     document.querySelectorAll('.nav-link[data-target]').forEach(link => {
         link.addEventListener('click', function () {
             const targetId = this.dataset.target;
 
-            // Toggle sidebar active state
             document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
             this.classList.add('active');
 
-            // Toggle view tabs
             document.querySelectorAll('.view-tab').forEach(tab => tab.classList.remove('active'));
             document.getElementById(targetId).classList.add('active');
 
-            // Update title
             let title = 'แผงควบคุมผู้ดูแลระบบ';
             if (targetId === 'calendar-view') title = 'แผงควบคุมผู้ดูแลระบบ (Calendar)';
             if (targetId === 'manage-view') title = 'จัดการข้อมูลการจอง (Management)';
@@ -73,7 +114,6 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     });
 
-    // --- TABLE RENDERING & SEARCH ---
     function renderAdminTable(filterText = '') {
         const filtered = bookings.filter(b =>
             b.title.toLowerCase().includes(filterText.toLowerCase()) ||
@@ -111,7 +151,6 @@ document.addEventListener('DOMContentLoaded', function () {
         renderAdminTable(e.target.value);
     });
 
-    // --- UPDATE (EDIT) LOGIC ---
     window.handleEditBooking = function (id) {
         const booking = bookings.find(b => b.id === id);
         if (!booking) return;
@@ -154,7 +193,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 }
                 return { title, agency, user, startT, endT };
             }
-        }).then((result) => {
+        }).then(async (result) => {
             if (result.isConfirmed) {
                 const idx = bookings.findIndex(b => b.id === id);
                 bookings[idx].title = result.value.title;
@@ -163,41 +202,37 @@ document.addEventListener('DOMContentLoaded', function () {
                 bookings[idx].extendedProps.user = result.value.user;
                 bookings[idx].extendedProps.agency = result.value.agency;
 
-                saveAndRefresh();
+                await db.bookings.put(bookings[idx]);
+                await saveAndRefresh();
                 Swal.fire('สำเร็จ!', 'อัปเดตข้อมูลการจองเรียบร้อยแล้ว', 'success');
             }
         });
     };
 
-    // --- DELETE LOGIC ---
     window.handleDeleteBooking = function (id) {
         Swal.fire({
             title: 'ยืนยันการลบ?',
-            text: "ข้อมูลการจองนี้จะถูกลบออกจากระบบอย่างถาวร",
+            text: 'ข้อมูลการจองนี้จะถูกลบออกจากระบบอย่างถาวร',
             icon: 'warning',
             showCancelButton: true,
             confirmButtonColor: '#ef4444',
             confirmButtonText: 'ใช่, ลบเลย',
             cancelButtonText: 'ยกเลิก'
-        }).then((result) => {
+        }).then(async (result) => {
             if (result.isConfirmed) {
+                await db.bookings.delete(id);
                 bookings = bookings.filter(b => b.id !== id);
-                saveAndRefresh();
+                await saveAndRefresh();
                 Swal.fire('ลบแล้ว!', 'ข้อมูลการจองถูกลบออกแล้ว', 'success');
             }
         });
     };
 
-    function saveAndRefresh() {
-        localStorage.setItem('room_bookings', JSON.stringify(bookings));
-        calendar.removeAllEvents();
-        calendar.addEventSource(bookings);
-        renderAdminTable(searchInput.value);
-        updateStats();
-        updateCharts();
+    async function saveAndRefresh() {
+        BookingSync.trigger();
+        await refreshAll();
     }
 
-    // --- ADD Logic (Admin View) ---
     function openBookingModal(start, end) {
         const dateStr = start.split('T')[0];
         Swal.fire({
@@ -229,7 +264,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 }
                 return { title, user, agency, startTime, endTime };
             }
-        }).then((result) => {
+        }).then(async (result) => {
             if (result.isConfirmed) {
                 const newB = {
                     id: Date.now().toString(),
@@ -245,8 +280,8 @@ document.addEventListener('DOMContentLoaded', function () {
                         owner: 'admin'
                     }
                 };
-                bookings.push(newB);
-                saveAndRefresh();
+                await db.bookings.put(newB);
+                await saveAndRefresh();
             }
         });
     }
@@ -256,7 +291,6 @@ document.addEventListener('DOMContentLoaded', function () {
         openBookingModal(now, now);
     });
 
-    // Stats
     function updateStats() {
         document.getElementById('total-bookings').textContent = bookings.length;
         const now = new Date();
@@ -267,7 +301,6 @@ document.addEventListener('DOMContentLoaded', function () {
         document.getElementById('month-bookings').textContent = monthCount;
     }
 
-    // --- CHARTS LOGIC ---
     function initCharts() {
         const ctxMonthly = document.getElementById('monthlyTrendChart').getContext('2d');
         const ctxAgency = document.getElementById('agencyChart').getContext('2d');
@@ -305,7 +338,6 @@ document.addEventListener('DOMContentLoaded', function () {
     function updateCharts() {
         if (!monthlyChart) return;
 
-        // 1. Monthly Trend
         const monthlyData = {};
         const months = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'];
         const currentYear = new Date().getFullYear();
@@ -322,7 +354,6 @@ document.addEventListener('DOMContentLoaded', function () {
         monthlyChart.data.datasets[0].data = months.map(m => monthlyData[m]);
         monthlyChart.update();
 
-        // 2. Agency Distribution
         const agencyData = {};
         bookings.forEach(b => {
             const agency = b.extendedProps.agency || 'ไม่ระบุ';
@@ -334,7 +365,6 @@ document.addEventListener('DOMContentLoaded', function () {
         agencyChart.data.datasets[0].data = sortedAgencies.map(a => a[1]);
         agencyChart.update();
 
-        // 3. Time Slots
         const timeData = Array(24).fill(0);
         bookings.forEach(b => {
             const hour = new Date(b.start).getHours();
@@ -342,18 +372,16 @@ document.addEventListener('DOMContentLoaded', function () {
         });
 
         const timeLabels = Array.from({ length: 24 }, (_, i) => `${i.toString().padStart(2, '0')}:00`);
-        timeSlotChart.data.labels = timeLabels.slice(7, 20); // Show 07:00 - 19:00
+        timeSlotChart.data.labels = timeLabels.slice(7, 20);
         timeSlotChart.data.datasets[0].data = timeData.slice(7, 20);
         timeSlotChart.update();
     }
 
-    // Logout
     document.getElementById('logout-btn').addEventListener('click', () => {
         localStorage.removeItem('current_user');
         window.location.href = 'index.html';
     });
 
-    // --- EXPORT Logic (High Quality PDF) ---
     document.getElementById('export-pdf-btn').addEventListener('click', () => {
         if (bookings.length === 0) {
             Swal.fire('ไม่มีข้อมูล', 'ไม่พบการจองเพื่อส่งออก', 'info');
