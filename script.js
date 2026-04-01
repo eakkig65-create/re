@@ -10,7 +10,6 @@ document.addEventListener('DOMContentLoaded', async function () {
 
     let bookings = [];
 
-    // Load Bookings
     async function loadBookings() {
         bookings = await db.bookings.toArray();
     }
@@ -92,6 +91,12 @@ document.addEventListener('DOMContentLoaded', async function () {
         if (await BookingSync.pullRemote(db)) await refreshFromDb();
     }, BookingSync.pollIntervalMs);
 
+    document.addEventListener('visibilitychange', async () => {
+        if (document.visibilityState === 'visible') {
+            if (await BookingSync.pullRemote(db)) await refreshFromDb();
+        }
+    });
+
     // Modals
     function openBookingModal(start, end) {
         const initialDate = start.split('T')[0];
@@ -144,25 +149,35 @@ document.addEventListener('DOMContentLoaded', async function () {
                     backgroundColor: rooms['comp-room'].color,
                     extendedProps: { user: r.value.user, agency: r.value.agency, room: 'comp-room', roomName: rooms['comp-room'].name }
                 };
-                await db.bookings.put(b);
-                await loadBookings();
-                calendar.refetchEvents();
-                updateStats();
-                renderRecentList();
-                triggerSync();
-                Swal.fire('สำเร็จ!', 'บันทึกการจองเรียบร้อยแล้ว', 'success');
+                try {
+                    await db.bookings.put(b);
+                    await loadBookings();
+                    calendar.refetchEvents();
+                    updateStats();
+                    renderRecentList();
+                    triggerSync();
+                    Swal.fire('สำเร็จ!', 'บันทึกการจองเรียบร้อยแล้ว', 'success');
+                } catch (err) {
+                    console.error(err);
+                    Swal.fire('บันทึกไม่สำเร็จ', err.message || String(err), 'error');
+                }
             }
         });
     }
 
     async function deleteBooking(id) {
-        await db.bookings.delete(id);
-        await loadBookings();
-        calendar.refetchEvents();
-        updateStats();
-        renderRecentList();
-        triggerSync();
-        Swal.fire('ลบแล้ว!', 'ลบการจองเรียบร้อยแล้ว', 'success');
+        try {
+            await db.bookings.delete(id);
+            await loadBookings();
+            calendar.refetchEvents();
+            updateStats();
+            renderRecentList();
+            triggerSync();
+            Swal.fire('ลบแล้ว!', 'ลบการจองเรียบร้อยแล้ว', 'success');
+        } catch (err) {
+            console.error(err);
+            Swal.fire('ลบไม่สำเร็จ', err.message || String(err), 'error');
+        }
     }
 
     function updateStats() {

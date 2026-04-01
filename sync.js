@@ -7,14 +7,27 @@
     var lastRemoteSnap = null;
 
     function remoteUrl() {
+        var base = window.BOOKING_DATA_BASE_URL;
+        if (typeof base === 'string' && base.trim()) {
+            var b = base.trim();
+            if (!b.endsWith('/')) b += '/';
+            return new URL(REMOTE_PATH, b).href;
+        }
         var path = window.location.pathname || '/';
+        var sub = path.match(/^(.*\/)admin-web\//);
+        if (sub) {
+            var rootDir = sub[1];
+            if (!rootDir.endsWith('/')) rootDir += '/';
+            return new URL(REMOTE_PATH, window.location.origin + rootDir).href;
+        }
         var i = path.lastIndexOf('/');
         var dir = i >= 0 ? path.slice(0, i + 1) : '/';
         return new URL(REMOTE_PATH, window.location.origin + dir).href;
     }
 
     window.BookingSync = {
-        pollIntervalMs: 25000,
+        /** ดึง data/bookings.json ถี่ขึ้น ≈ อัปเดตเร็วแบบไม่ใช้ฐานข้อมูลคลาวด์ */
+        pollIntervalMs: 4000,
 
         trigger: function () {
             try {

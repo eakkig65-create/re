@@ -15,13 +15,24 @@ document.addEventListener('DOMContentLoaded', async function () {
     let calendar;
 
     if (!currentUser || currentUser.role !== 'admin') {
-        window.location.href = 'index.html';
+        window.location.href = 'admin-login.html';
         return;
+    }
+
+    const displayNameEl = document.querySelector('.user-name');
+    if (displayNameEl && currentUser.name) {
+        displayNameEl.textContent = currentUser.name;
     }
 
     const rooms = {
         'comp-room': { name: 'ห้องอบรมคอมพิวเตอร์ กทส.กห.', color: '#6366f1' }
     };
+
+    const syncNote = document.getElementById('data-sync-note');
+    if (syncNote && window.BookingSync && typeof BookingSync.remoteDataUrl === 'function') {
+        syncNote.textContent =
+            'ข้อมูลเชื่อมกับหน้าหลัก re-main ชุดเดียวกัน · แหล่งซิงค์ไฟล์: ' + BookingSync.remoteDataUrl();
+    }
 
     async function migrateLegacyLocalStorage() {
         const raw = localStorage.getItem('room_bookings');
@@ -90,6 +101,12 @@ document.addEventListener('DOMContentLoaded', async function () {
     setInterval(async () => {
         if (await BookingSync.pullRemote(db)) await refreshAll();
     }, BookingSync.pollIntervalMs);
+
+    document.addEventListener('visibilitychange', async () => {
+        if (document.visibilityState === 'visible') {
+            if (await BookingSync.pullRemote(db)) await refreshAll();
+        }
+    });
 
     document.querySelectorAll('.nav-link[data-target]').forEach(link => {
         link.addEventListener('click', function () {
@@ -202,9 +219,14 @@ document.addEventListener('DOMContentLoaded', async function () {
                 bookings[idx].extendedProps.user = result.value.user;
                 bookings[idx].extendedProps.agency = result.value.agency;
 
-                await db.bookings.put(bookings[idx]);
-                await saveAndRefresh();
-                Swal.fire('สำเร็จ!', 'อัปเดตข้อมูลการจองเรียบร้อยแล้ว', 'success');
+                try {
+                    await db.bookings.put(bookings[idx]);
+                    await saveAndRefresh();
+                    Swal.fire('สำเร็จ!', 'อัปเดตข้อมูลการจองเรียบร้อยแล้ว', 'success');
+                } catch (err) {
+                    console.error(err);
+                    Swal.fire('บันทึกไม่สำเร็จ', err.message || String(err), 'error');
+                }
             }
         });
     };
@@ -220,10 +242,15 @@ document.addEventListener('DOMContentLoaded', async function () {
             cancelButtonText: 'ยกเลิก'
         }).then(async (result) => {
             if (result.isConfirmed) {
-                await db.bookings.delete(id);
-                bookings = bookings.filter(b => b.id !== id);
-                await saveAndRefresh();
-                Swal.fire('ลบแล้ว!', 'ข้อมูลการจองถูกลบออกแล้ว', 'success');
+                try {
+                    await db.bookings.delete(id);
+                    bookings = bookings.filter(b => b.id !== id);
+                    await saveAndRefresh();
+                    Swal.fire('ลบแล้ว!', 'ข้อมูลการจองถูกลบออกแล้ว', 'success');
+                } catch (err) {
+                    console.error(err);
+                    Swal.fire('ลบไม่สำเร็จ', err.message || String(err), 'error');
+                }
             }
         });
     };
@@ -280,8 +307,13 @@ document.addEventListener('DOMContentLoaded', async function () {
                         owner: 'admin'
                     }
                 };
-                await db.bookings.put(newB);
-                await saveAndRefresh();
+                try {
+                    await db.bookings.put(newB);
+                    await saveAndRefresh();
+                } catch (err) {
+                    console.error(err);
+                    Swal.fire('บันทึกไม่สำเร็จ', err.message || String(err), 'error');
+                }
             }
         });
     }
@@ -379,7 +411,7 @@ document.addEventListener('DOMContentLoaded', async function () {
 
     document.getElementById('logout-btn').addEventListener('click', () => {
         localStorage.removeItem('current_user');
-        window.location.href = 'index.html';
+        window.location.href = 'admin-login.html';
     });
 
     document.getElementById('export-pdf-btn').addEventListener('click', () => {
