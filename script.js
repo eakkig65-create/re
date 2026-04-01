@@ -74,7 +74,7 @@ document.addEventListener('DOMContentLoaded', async function () {
                 </div>`,
                 showCancelButton: true,
                 confirmButtonText: 'ลบการจอง',
-                confirmButtonColor: '#d33',
+                confirmButtonColor: '#7a1f2d',
                 cancelButtonText: 'ปิด'
             }).then(r => r.isConfirmed && deleteBooking(b.id));
         }
@@ -107,16 +107,16 @@ document.addEventListener('DOMContentLoaded', async function () {
                 <input id="swal-agency" class="swal2-input" placeholder="หน่วยงาน">
                 <input id="swal-user" class="swal2-input" placeholder="ชื่อผู้จอง">
                 <div style="margin-top:15px; text-align:left; padding:0 1.5rem;">
-                    <label style="font-size:0.8rem; color:#64748b;">วันที่จอง:</label>
+                    <label style="font-size:0.8rem; color:#495057;">วันที่จอง:</label>
                     <input id="swal-date" type="date" class="swal2-input" value="${initialDate}" style="margin:5px 0 15px 0; width:100%;">
                 </div>
                 <div style="display:flex; gap:10px; margin-top:5px; padding:0 1.5rem;">
                     <div style="flex:1; text-align:left;">
-                        <label style="font-size:0.8rem; color:#64748b;">เริ่ม:</label>
+                        <label style="font-size:0.8rem; color:#495057;">เริ่ม:</label>
                         <input id="swal-start" type="time" class="swal2-input" value="08:00" style="margin:5px 0 0 0; width:100%;">
                     </div>
                     <div style="flex:1; text-align:left;">
-                        <label style="font-size:0.8rem; color:#64748b;">สิ้นสุด:</label>
+                        <label style="font-size:0.8rem; color:#495057;">สิ้นสุด:</label>
                         <input id="swal-end" type="time" class="swal2-input" value="16:00" style="margin:5px 0 0 0; width:100%;">
                     </div>
                 </div>
@@ -195,7 +195,7 @@ document.addEventListener('DOMContentLoaded', async function () {
     function renderRecentList() {
         const el = document.getElementById('recent-bookings');
         if (!el) return;
-        if (!bookings.length) return el.innerHTML = '<p style="text-align:center;color:#94a3b8;font-size:0.8rem;margin-top:1rem;">ไม่มีการจองล่าสุด</p>';
+        if (!bookings.length) return el.innerHTML = '<p style="text-align:center;color:#6c757d;font-size:0.8rem;margin-top:1rem;">ไม่มีการจองล่าสุด</p>';
         const sorted = [...bookings].sort((a, b) => b.id - a.id).slice(0, 5);
         el.innerHTML = sorted.map(b => `
             <div class="recent-item">
@@ -240,7 +240,7 @@ document.addEventListener('DOMContentLoaded', async function () {
                     <div style="text-align: center; margin-bottom: 40px;">
                         <img src="1.png" style="width: 22mm; height: 22mm; margin-bottom: 15px; display: block; margin-left: auto; margin-right: auto;">
                         <h1 style="font-size: 22pt; color: #003366; margin: 0 0 15px 0; font-weight: bold; line-height: 1.3;">รายงานสรุปการใช้ห้องอบรม<br>กรมเทคโนโลยีสารสนเทศและอวกาศกลาโหม</h1>
-                        <div style="margin: 10px auto; border-bottom: 2px solid #b8860b; width: 60mm;"></div>
+                        <div style="margin: 10px auto; border-bottom: 2px solid #c9a227; width: 60mm;"></div>
                     </div>
                     
                     <div style="display: flex; justify-content: space-between; margin-bottom: 25px; font-size: 13pt; border-bottom: 1px solid #eee; padding-bottom: 10px;">

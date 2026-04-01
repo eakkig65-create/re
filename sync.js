@@ -14,12 +14,6 @@
             return new URL(REMOTE_PATH, b).href;
         }
         var path = window.location.pathname || '/';
-        var sub = path.match(/^(.*\/)admin-web\//);
-        if (sub) {
-            var rootDir = sub[1];
-            if (!rootDir.endsWith('/')) rootDir += '/';
-            return new URL(REMOTE_PATH, window.location.origin + rootDir).href;
-        }
         var i = path.lastIndexOf('/');
         var dir = i >= 0 ? path.slice(0, i + 1) : '/';
         return new URL(REMOTE_PATH, window.location.origin + dir).href;
