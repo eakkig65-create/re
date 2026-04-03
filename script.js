@@ -69,6 +69,7 @@ document.addEventListener('DOMContentLoaded', async function () {
                 html: `<div style="text-align:left; font-family:'Sarabun', sans-serif;">
                     <p><strong>หัวข้อ:</strong> ${b.title}</p>
                     <p><strong>หน่วยงาน:</strong> ${b.extendedProps.agency}</p>
+                    ${b.extendedProps.rank ? `<p><strong>ยศ:</strong> ${b.extendedProps.rank}</p>` : ''}
                     <p><strong>ผู้จอง:</strong> ${b.extendedProps.user}</p>
                     <p><strong>เริ่ม:</strong> ${b.start.toLocaleString('th-TH')}</p>
                 </div>`,
@@ -100,24 +101,83 @@ document.addEventListener('DOMContentLoaded', async function () {
     // Modals
     function openBookingModal(start, end) {
         const initialDate = start.split('T')[0];
+        const todayStr = new Date(new Date().getTime() - new Date().getTimezoneOffset() * 60000).toISOString().split('T')[0];
         Swal.fire({
             title: 'จองห้องอบรม',
             html: `
-                <input id="swal-title" class="swal2-input" placeholder="หัวข้อการอบรม">
-                <input id="swal-agency" class="swal2-input" placeholder="หน่วยงาน">
-                <input id="swal-user" class="swal2-input" placeholder="ชื่อผู้จอง">
-                <div style="margin-top:15px; text-align:left; padding:0 1.5rem;">
-                    <label style="font-size:0.8rem; color:#495057;">วันที่จอง:</label>
-                    <input id="swal-date" type="date" class="swal2-input" value="${initialDate}" style="margin:5px 0 15px 0; width:100%;">
-                </div>
-                <div style="display:flex; gap:10px; margin-top:5px; padding:0 1.5rem;">
-                    <div style="flex:1; text-align:left;">
-                        <label style="font-size:0.8rem; color:#495057;">เริ่ม:</label>
-                        <input id="swal-start" type="time" class="swal2-input" value="08:00" style="margin:5px 0 0 0; width:100%;">
+                <div style="display:flex; flex-direction:column; gap:12px; text-align:left; font-family:'Sarabun', sans-serif;">
+                    <div>
+                        <label style="font-size:0.85rem; color:#495057; font-weight:600;">หัวข้อการอบรม</label>
+                        <input id="swal-title" class="swal2-input" placeholder="ระบุหัวข้อการอบรม" style="margin:4px 0 0 0; width:100%; box-sizing:border-box;">
                     </div>
-                    <div style="flex:1; text-align:left;">
-                        <label style="font-size:0.8rem; color:#495057;">สิ้นสุด:</label>
-                        <input id="swal-end" type="time" class="swal2-input" value="16:00" style="margin:5px 0 0 0; width:100%;">
+                    
+                    <div style="display:flex; gap:10px;">
+                        <div style="flex:1;">
+                            <label style="font-size:0.85rem; color:#495057; font-weight:600;">หน่วยงาน</label>
+                            <select id="swal-agency" class="swal2-input" style="margin:4px 0 0 0; width:100%; box-sizing:border-box;">
+                                <option value="" disabled selected>เลือกหน่วยงาน</option>
+                                <optgroup label="--- หน่วยขึ้นตรง ---">
+                                    <option value="สำนักปลัดกระทรวงกลาโหม">สำนักปลัดกระทรวงกลาโหม</option>
+                                    <option value="สำนักพัฒนาระบบราชการกลาโหม">สำนักพัฒนาระบบราชการกลาโหม</option>
+                                    <option value="สำนักงานเลขานุการ สป.">สำนักงานเลขานุการ สป.</option>
+                                    <option value="สำนักนโยบายและแผนกลาโหม">สำนักนโยบายและแผนกลาโหม</option>
+                                    <option value="กรมแสนยุทธนา">กรมแสนยุทธนา</option>
+                                    <option value="สำนักงานประมาณกลาโหม">สำนักงานประมาณกลาโหม</option>
+                                    <option value="กรมพระธรรมนูญ">กรมพระธรรมนูญ</option>
+                                    <option value="กรมการเงินกลาโหม">กรมการเงินกลาโหม</option>
+                                    <option value="ศูนย์การอุตสาหกรรมป้องกันประเทศและพลังงานทหาร">ศูนย์การอุตสาหกรรมป้องกันประเทศและพลังงานทหาร</option>
+                                    <option value="กรมเทคโนโลยีสารสนเทศและอวกาศกลาโหม">กรมเทคโนโลยีสารสนเทศและอวกาศกลาโหม</option>
+                                    <option value="กรมวิทยาศาสตร์และเทคโนโลยีกลาโหม">กรมวิทยาศาสตร์และเทคโนโลยีกลาโหม</option>
+                                    <option value="กรมการสรรพกำลังกลาโหม">กรมการสรรพกำลังกลาโหม</option>
+                                    <option value="สำนักงานสนับสนุน สป.">สำนักงานสนับสนุน สป.</option>
+                                    <option value="สำนักงานตรวจสอบภายในกลาโหม">สำนักงานตรวจสอบภายในกลาโหม</option>
+                                    <option value="องค์การสงเคราะห์ทหารผ่านศึก">องค์การสงเคราะห์ทหารผ่านศึก</option>
+                                </optgroup>
+                                <optgroup label="--- กองทัพ ---">
+                                    <option value="กองทัพบก">กองทัพบก</option>
+                                    <option value="กองทัพเรือ">กองทัพเรือ</option>
+                                    <option value="กองทัพอากาศ">กองทัพอากาศ</option>
+                                </optgroup>
+                            </select>
+                        </div>
+                        <div style="flex:1;">
+                            <label style="font-size:0.85rem; color:#495057; font-weight:600;">ยศ (ถ้ามี)</label>
+                            <select id="swal-rank" class="swal2-input" style="margin:4px 0 0 0; width:100%; box-sizing:border-box;">
+                                <option value="" selected>ไม่ระบุ</option>
+                                ${ [
+                                    "พลเอก (General)", "พลเรือเอก (Admiral)", "พลอากาศเอก (Air Chief Marshal)",
+                                    "พลโท (Lieutenant General)", "พลเรือโท (Vice Admiral)", "พลอากาศโท (Air Marshal)",
+                                    "พลตรี (Major General)", "พลเรือตรี (Rear Admiral)", "พลอากาศตรี (Air Vice Marshal)",
+                                    "พันเอก (Colonel)", "นาวาเอก (Captain)", "นาวาอากาศเอก (Group Captain)",
+                                    "พันโท (Lieutenant Colonel)", "นาวาโท (Commander)", "นาวาอากาศโท (Wing Commander)",
+                                    "พันตรี (Major)", "นาวาตรี (Lieutenant Commander)", "นาวาอากาศตรี (Squadron Leader)",
+                                    "ร้อยเอก (Captain)", "เรือเอก (Lieutenant)", "เรืออากาศเอก (Flight Lieutenant)",
+                                    "ร้อยโท (Lieutenant)", "เรือโท (Lieutenant Junior Grade)", "เรืออากาศโท (Flying Officer)",
+                                    "ร้อยตรี (Sub Lieutenant)", "เรือตรี (Sub Lieutenant)", "เรืออากาศตรี (Pilot Officer)"
+                                ].map(opt => `<option value="${opt}">${opt}</option>`).join('') }
+                            </select>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label style="font-size:0.85rem; color:#495057; font-weight:600;">ชื่อผู้จอง</label>
+                        <input id="swal-user" class="swal2-input" placeholder="ระบุชื่อผู้จอง" style="margin:4px 0 0 0; width:100%; box-sizing:border-box;">
+                    </div>
+                    
+                    <div>
+                        <label style="font-size:0.85rem; color:#495057; font-weight:600;">วันที่จอง</label>
+                        <input id="swal-date" type="date" class="swal2-input" value="${initialDate}" style="margin:4px 0 0 0; width:100%; box-sizing:border-box;">
+                    </div>
+
+                    <div style="display:flex; gap:10px;">
+                        <div style="flex:1;">
+                            <label style="font-size:0.85rem; color:#495057; font-weight:600;">เวลาเริ่ม</label>
+                            <input id="swal-start" type="time" class="swal2-input" value="08:00" style="margin:4px 0 0 0; width:100%; box-sizing:border-box;">
+                        </div>
+                        <div style="flex:1;">
+                            <label style="font-size:0.85rem; color:#495057; font-weight:600;">เวลาสิ้นสุด</label>
+                            <input id="swal-end" type="time" class="swal2-input" value="16:00" style="margin:4px 0 0 0; width:100%; box-sizing:border-box;">
+                        </div>
                     </div>
                 </div>
             `,
@@ -128,12 +188,15 @@ document.addEventListener('DOMContentLoaded', async function () {
                 const title = document.getElementById('swal-title').value;
                 const user = document.getElementById('swal-user').value;
                 const agency = document.getElementById('swal-agency').value;
+                const rank = document.getElementById('swal-rank').value;
                 const date = document.getElementById('swal-date').value;
                 if (!title || !user || !agency || !date) return Swal.showValidationMessage('กรุณากรอกข้อมูลให้ครบ');
+
                 return {
                     title,
                     user,
                     agency,
+                    rank,
                     date,
                     start: document.getElementById('swal-start').value,
                     end: document.getElementById('swal-end').value
@@ -147,7 +210,7 @@ document.addEventListener('DOMContentLoaded', async function () {
                     start: `${r.value.date}T${r.value.start}`,
                     end: `${r.value.date}T${r.value.end}`,
                     backgroundColor: rooms['comp-room'].color,
-                    extendedProps: { user: r.value.user, agency: r.value.agency, room: 'comp-room', roomName: rooms['comp-room'].name }
+                    extendedProps: { user: r.value.user, agency: r.value.agency, rank: r.value.rank, room: 'comp-room', roomName: rooms['comp-room'].name }
                 };
                 try {
                     await db.bookings.put(b);

@@ -179,18 +179,67 @@ document.addEventListener('DOMContentLoaded', async function () {
         Swal.fire({
             title: 'แก้ไขข้อมูลการจอง',
             html: `
-                <div style="text-align:left; margin-bottom:10px; font-weight:600; color:var(--primary-color);">ID: ${id}</div>
-                <input id="edit-title" class="swal2-input" placeholder="หัวข้อการอบรม" value="${booking.title}">
-                <input id="edit-agency" class="swal2-input" placeholder="หน่วยงาน" value="${booking.extendedProps.agency}">
-                <input id="edit-user" class="swal2-input" placeholder="ชื่อผู้จอง" value="${booking.extendedProps.user}">
-                <div style="display: flex; gap: 10px; margin-top: 12px;">
-                    <div style="flex: 1; text-align: left;">
-                        <label style="font-size: 0.8rem; color: #64748b; display: block; margin-bottom: 4px;">เวลาเริ่มต้น</label>
-                        <input id="edit-start-time" type="time" class="swal2-input" value="${startTime}" style="margin: 0; width: 100%;">
+                <div style="text-align:left; margin-bottom:10px; font-weight:600; color:var(--primary-color);">แก้ไข ID: ${id}</div>
+                <div style="display:flex; flex-direction:column; gap:12px; text-align:left; font-family:'Sarabun', sans-serif;">
+                    <div>
+                        <label style="font-size:0.85rem; color:#495057; font-weight:600;">หัวข้อการอบรม</label>
+                        <input id="edit-title" class="swal2-input" placeholder="ระบุหัวข้อการอบรม" value="${booking.title}" style="margin:4px 0 0 0; width:100%; box-sizing:border-box;">
                     </div>
-                    <div style="flex: 1; text-align: left;">
-                        <label style="font-size: 0.8rem; color: #64748b; display: block; margin-bottom: 4px;">เวลาสิ้นสุด</label>
-                        <input id="edit-end-time" type="time" class="swal2-input" value="${endTime}" style="margin: 0; width: 100%;">
+                    
+                    <div style="display:flex; gap:10px;">
+                        <div style="flex:1;">
+                            <label style="font-size:0.85rem; color:#495057; font-weight:600;">หน่วยงาน</label>
+                            <select id="edit-agency" class="swal2-input" style="margin:4px 0 0 0; width:100%; box-sizing:border-box;">
+                                <option value="" disabled>เลือกหน่วยงาน</option>
+                                <optgroup label="--- หน่วยขึ้นตรง ---">
+                                    ${ [
+                                        "สำนักปลัดกระทรวงกลาโหม", "สำนักพัฒนาระบบราชการกลาโหม", "สำนักงานเลขานุการ สป.",
+                                        "สำนักนโยบายและแผนกลาโหม", "กรมแสนยุทธนา", "สำนักงานประมาณกลาโหม",
+                                        "กรมพระธรรมนูญ", "กรมการเงินกลาโหม", "ศูนย์การอุตสาหกรรมป้องกันประเทศและพลังงานทหาร",
+                                        "กรมเทคโนโลยีสารสนเทศและอวกาศกลาโหม", "กรมวิทยาศาสตร์และเทคโนโลยีกลาโหม",
+                                        "กรมการสรรพกำลังกลาโหม", "สำนักงานสนับสนุน สป.", "สำนักงานตรวจสอบภายในกลาโหม",
+                                        "องค์การสงเคราะห์ทหารผ่านศึก"
+                                    ].map(opt => `<option value="${opt}" ${opt === booking.extendedProps.agency ? 'selected' : ''}>${opt}</option>`).join('') }
+                                </optgroup>
+                                <optgroup label="--- กองทัพ ---">
+                                    ${ ["กองทัพบก", "กองทัพเรือ", "กองทัพอากาศ"]
+                                        .map(opt => `<option value="${opt}" ${opt === booking.extendedProps.agency ? 'selected' : ''}>${opt}</option>`).join('') }
+                                </optgroup>
+                            </select>
+                        </div>
+                        <div style="flex:1;">
+                            <label style="font-size:0.85rem; color:#495057; font-weight:600;">ยศ (ถ้ามี)</label>
+                            <select id="edit-rank" class="swal2-input" style="margin:4px 0 0 0; width:100%; box-sizing:border-box;">
+                                <option value="" ${!booking.extendedProps.rank ? 'selected' : ''}>ไม่ระบุ</option>
+                                ${ [
+                                    "พลเอก (General)", "พลเรือเอก (Admiral)", "พลอากาศเอก (Air Chief Marshal)",
+                                    "พลโท (Lieutenant General)", "พลเรือโท (Vice Admiral)", "พลอากาศโท (Air Marshal)",
+                                    "พลตรี (Major General)", "พลเรือตรี (Rear Admiral)", "พลอากาศตรี (Air Vice Marshal)",
+                                    "พันเอก (Colonel)", "นาวาเอก (Captain)", "นาวาอากาศเอก (Group Captain)",
+                                    "พันโท (Lieutenant Colonel)", "นาวาโท (Commander)", "นาวาอากาศโท (Wing Commander)",
+                                    "พันตรี (Major)", "นาวาตรี (Lieutenant Commander)", "นาวาอากาศตรี (Squadron Leader)",
+                                    "ร้อยเอก (Captain)", "เรือเอก (Lieutenant)", "เรืออากาศเอก (Flight Lieutenant)",
+                                    "ร้อยโท (Lieutenant)", "เรือโท (Lieutenant Junior Grade)", "เรืออากาศโท (Flying Officer)",
+                                    "ร้อยตรี (Sub Lieutenant)", "เรือตรี (Sub Lieutenant)", "เรืออากาศตรี (Pilot Officer)"
+                                ].map(opt => `<option value="${opt}" ${opt === booking.extendedProps.rank ? 'selected' : ''}>${opt}</option>`).join('') }
+                            </select>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label style="font-size:0.85rem; color:#495057; font-weight:600;">ชื่อผู้จอง</label>
+                        <input id="edit-user" class="swal2-input" placeholder="ระบุชื่อผู้จอง" value="${booking.extendedProps.user}" style="margin:4px 0 0 0; width:100%; box-sizing:border-box;">
+                    </div>
+                    
+                    <div style="display:flex; gap:10px;">
+                        <div style="flex:1;">
+                            <label style="font-size:0.85rem; color:#495057; font-weight:600;">เวลาเริ่ม</label>
+                            <input id="edit-start-time" type="time" class="swal2-input" value="${startTime}" style="margin:4px 0 0 0; width:100%; box-sizing:border-box;">
+                        </div>
+                        <div style="flex:1;">
+                            <label style="font-size:0.85rem; color:#495057; font-weight:600;">เวลาสิ้นสุด</label>
+                            <input id="edit-end-time" type="time" class="swal2-input" value="${endTime}" style="margin:4px 0 0 0; width:100%; box-sizing:border-box;">
+                        </div>
                     </div>
                 </div>
             `,
@@ -200,6 +249,7 @@ document.addEventListener('DOMContentLoaded', async function () {
             preConfirm: () => {
                 const title = document.getElementById('edit-title').value;
                 const agency = document.getElementById('edit-agency').value;
+                const rank = document.getElementById('edit-rank').value;
                 const user = document.getElementById('edit-user').value;
                 const startT = document.getElementById('edit-start-time').value;
                 const endT = document.getElementById('edit-end-time').value;
@@ -208,7 +258,7 @@ document.addEventListener('DOMContentLoaded', async function () {
                     Swal.showValidationMessage('กรุณากรอกข้อมูลให้ครบถ้วน');
                     return false;
                 }
-                return { title, agency, user, startT, endT };
+                return { title, agency, rank, user, startT, endT };
             }
         }).then(async (result) => {
             if (result.isConfirmed) {
@@ -218,6 +268,7 @@ document.addEventListener('DOMContentLoaded', async function () {
                 bookings[idx].end = `${dateStr}T${result.value.endT}`;
                 bookings[idx].extendedProps.user = result.value.user;
                 bookings[idx].extendedProps.agency = result.value.agency;
+                bookings[idx].extendedProps.rank = result.value.rank || '';
 
                 try {
                     await db.bookings.put(bookings[idx]);
@@ -265,31 +316,85 @@ document.addEventListener('DOMContentLoaded', async function () {
         Swal.fire({
             title: 'เพิ่มการจอง (โหมด Admin)',
             html: `
-                <input id="swal-title" class="swal2-input" placeholder="หัวข้อการอบรม">
-                <input id="swal-agency" class="swal2-input" placeholder="หน่วยงาน">
-                <input id="swal-user" class="swal2-input" placeholder="ชื่อผู้ดูแล/ผู้จอง">
-                <div style="display: flex; gap: 10px; margin-top: 12px;">
-                    <div style="flex: 1; text-align: left;">
-                        <input id="swal-start-time" type="time" class="swal2-input" value="08:00" style="margin: 0; width: 100%;">
+                <div style="display:flex; flex-direction:column; gap:12px; text-align:left; font-family:'Sarabun', sans-serif;">
+                    <div>
+                        <label style="font-size:0.85rem; color:#495057; font-weight:600;">หัวข้อการอบรม</label>
+                        <input id="swal-title" class="swal2-input" placeholder="ระบุหัวข้อการอบรม" style="margin:4px 0 0 0; width:100%; box-sizing:border-box;">
                     </div>
-                    <div style="flex: 1; text-align: left;">
-                        <input id="swal-end-time" type="time" class="swal2-input" value="16:00" style="margin: 0; width: 100%;">
+                    
+                    <div style="display:flex; gap:10px;">
+                        <div style="flex:1;">
+                            <label style="font-size:0.85rem; color:#495057; font-weight:600;">หน่วยงาน</label>
+                            <select id="swal-agency" class="swal2-input" style="margin:4px 0 0 0; width:100%; box-sizing:border-box;">
+                                <option value="" disabled selected>เลือกหน่วยงาน</option>
+                                <optgroup label="--- หน่วยขึ้นตรง ---">
+                                    ${ [
+                                        "สำนักปลัดกระทรวงกลาโหม", "สำนักพัฒนาระบบราชการกลาโหม", "สำนักงานเลขานุการ สป.",
+                                        "สำนักนโยบายและแผนกลาโหม", "กรมแสนยุทธนา", "สำนักงานประมาณกลาโหม",
+                                        "กรมพระธรรมนูญ", "กรมการเงินกลาโหม", "ศูนย์การอุตสาหกรรมป้องกันประเทศและพลังงานทหาร",
+                                        "กรมเทคโนโลยีสารสนเทศและอวกาศกลาโหม", "กรมวิทยาศาสตร์และเทคโนโลยีกลาโหม",
+                                        "กรมการสรรพกำลังกลาโหม", "สำนักงานสนับสนุน สป.", "สำนักงานตรวจสอบภายในกลาโหม",
+                                        "องค์การสงเคราะห์ทหารผ่านศึก"
+                                    ].map(opt => `<option value="${opt}">${opt}</option>`).join('') }
+                                </optgroup>
+                                <optgroup label="--- กองทัพ ---">
+                                    ${ ["กองทัพบก", "กองทัพเรือ", "กองทัพอากาศ"]
+                                        .map(opt => `<option value="${opt}">${opt}</option>`).join('') }
+                                </optgroup>
+                            </select>
+                        </div>
+                        <div style="flex:1;">
+                            <label style="font-size:0.85rem; color:#495057; font-weight:600;">ยศ (ถ้ามี)</label>
+                            <select id="swal-rank" class="swal2-input" style="margin:4px 0 0 0; width:100%; box-sizing:border-box;">
+                                <option value="" selected>ไม่ระบุ</option>
+                                ${ [
+                                    "พลเอก (General)", "พลเรือเอก (Admiral)", "พลอากาศเอก (Air Chief Marshal)",
+                                    "พลโท (Lieutenant General)", "พลเรือโท (Vice Admiral)", "พลอากาศโท (Air Marshal)",
+                                    "พลตรี (Major General)", "พลเรือตรี (Rear Admiral)", "พลอากาศตรี (Air Vice Marshal)",
+                                    "พันเอก (Colonel)", "นาวาเอก (Captain)", "นาวาอากาศเอก (Group Captain)",
+                                    "พันโท (Lieutenant Colonel)", "นาวาโท (Commander)", "นาวาอากาศโท (Wing Commander)",
+                                    "พันตรี (Major)", "นาวาตรี (Lieutenant Commander)", "นาวาอากาศตรี (Squadron Leader)",
+                                    "ร้อยเอก (Captain)", "เรือเอก (Lieutenant)", "เรืออากาศเอก (Flight Lieutenant)",
+                                    "ร้อยโท (Lieutenant)", "เรือโท (Lieutenant Junior Grade)", "เรืออากาศโท (Flying Officer)",
+                                    "ร้อยตรี (Sub Lieutenant)", "เรือตรี (Sub Lieutenant)", "เรืออากาศตรี (Pilot Officer)"
+                                ].map(opt => `<option value="${opt}">${opt}</option>`).join('') }
+                            </select>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label style="font-size:0.85rem; color:#495057; font-weight:600;">ชื่อผู้จอง</label>
+                        <input id="swal-user" class="swal2-input" placeholder="ระบุชื่อผู้จอง" style="margin:4px 0 0 0; width:100%; box-sizing:border-box;">
+                    </div>
+
+                    <div style="display:flex; gap:10px;">
+                        <div style="flex:1;">
+                            <label style="font-size:0.85rem; color:#495057; font-weight:600;">เวลาเริ่ม</label>
+                            <input id="swal-start-time" type="time" class="swal2-input" value="08:00" style="margin:4px 0 0 0; width:100%; box-sizing:border-box;">
+                        </div>
+                        <div style="flex:1;">
+                            <label style="font-size:0.85rem; color:#495057; font-weight:600;">เวลาสิ้นสุด</label>
+                            <input id="swal-end-time" type="time" class="swal2-input" value="16:00" style="margin:4px 0 0 0; width:100%; box-sizing:border-box;">
+                        </div>
                     </div>
                 </div>
             `,
             showCancelButton: true,
             confirmButtonText: 'บันทึก',
+            cancelButtonText: 'ยกเลิก',
             preConfirm: () => {
                 const title = document.getElementById('swal-title').value;
                 const agency = document.getElementById('swal-agency').value;
+                const rank = document.getElementById('swal-rank') ? document.getElementById('swal-rank').value : '';
                 const user = document.getElementById('swal-user').value;
                 const startTime = document.getElementById('swal-start-time').value;
                 const endTime = document.getElementById('swal-end-time').value;
+
                 if (!title || !user || !agency) {
                     Swal.showValidationMessage('กรุณากรอกข้อมูลให้ครบถ้วน');
                     return false;
                 }
-                return { title, user, agency, startTime, endTime };
+                return { title, user, agency, rank, startTime, endTime };
             }
         }).then(async (result) => {
             if (result.isConfirmed) {
@@ -302,6 +407,7 @@ document.addEventListener('DOMContentLoaded', async function () {
                     extendedProps: {
                         user: result.value.user,
                         agency: result.value.agency,
+                        rank: result.value.rank || '',
                         room: 'comp-room',
                         roomName: rooms['comp-room'].name,
                         owner: 'admin'
